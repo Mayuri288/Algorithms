@@ -1,0 +1,75 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+/**
+*
+* @param numberofElements is the vector of number
+* @param startIndex is the starting index in array
+* @param endIndex is the ending index in array
+* @return returns the index of the peak value in @param numberofElements
+*/
+int findPeak(vector<int> numberofElements, int startIndex, int endIndex) {
+	//Checking for invalid input
+	if (numberofElements.empty() || startIndex > endIndex ||
+		startIndex > numberofElements.size() || endIndex >
+		numberofElements.size() ||
+		startIndex < 0 || endIndex < 0)
+		return -1;
+	//If there is single element in vector, then it is the peak element. Return
+	//index of peak element.
+		if (numberofElements.size() == 1 || endIndex == startIndex)
+			return startIndex;
+	//if there are two number of elements, then return the index of the
+	//maximum element.
+		if (endIndex - startIndex == 1) {
+			if (numberofElements[startIndex] >
+				numberofElements[endIndex])
+				return startIndex;
+			else
+				return endIndex;
+		}
+	//computing the middle index of search space
+	int mid = (startIndex + endIndex) / 2;
+	int leftElement = numberofElements[mid - 1];
+	int middleElement = numberofElements[mid];
+	int rightElement = numberofElements[mid + 1];
+	//if middle value is greater than its neighboring values, then it's peak.
+	//Return the index of peak.
+		if (middleElement > leftElement && middleElement > rightElement)
+			return mid;
+	//if middle value is smaller than right value and greater than left
+	//values, then search in right half of the array.
+		if (middleElement > leftElement)
+			return findPeak(numberofElements, mid + 1, endIndex);
+	//else search in left half of the array.
+		else
+			return findPeak(numberofElements, startIndex, mid - 1);
+}
+vector<int> readElementsFromFile() {
+	ifstream peakNumberFile;
+	peakNumberFile.open("peak.txt");
+	vector<int> numberofElements;
+	int num;
+	if (peakNumberFile) {
+		while (peakNumberFile >> num) {
+			numberofElements.push_back(num);
+		}
+	}
+	return numberofElements;
+}
+int main() {
+	vector<int> numberofElements = readElementsFromFile();
+	int indexOfPeakValue = findPeak(numberofElements, 0,
+		numberofElements.size() - 1);
+	if (indexOfPeakValue != -1) {
+		cout << "Peak Index of element: " << indexOfPeakValue <<
+			endl;
+		cout << "Peak Value: " <<
+			numberofElements[indexOfPeakValue];
+	}
+	else {
+		cout << "Invalid input!";
+	}
+	return 0;
+}
