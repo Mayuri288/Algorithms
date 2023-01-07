@@ -1,0 +1,143 @@
+#include "utility.h"
+using namespace std;
+class Point {
+private:
+	float a;
+	float b;
+public:
+	Point() {
+		a = 0;
+		b = 0;
+	}
+	Point(float a, float b) {
+		this->a = a;
+		this->b = b;
+	}
+	float getA() const {
+		return a;
+	}
+	float getB() const {
+		return b;
+	}
+	double getMinDistance(Point p) const {
+		return sqrt(pow(a - p.a, 2) + pow(b - p.b, 2));
+	}
+};
+class closestPairs {
+private:
+	Point px;
+	Point py;
+	double distance;
+public:
+	closestPairs(Point px, Point py, double distance) {
+		this->px = px;
+		this->py = py;
+		this->distance = distance;
+	}
+	Point getPx() const {
+		return px;
+	}
+	Point getPy() const {
+		return py;
+	}
+	double getDistance() const {
+		return distance;
+	}
+};
+//Read the points from the file
+vector<Point> getPointsfromFile() {
+	ifstream pointsFile;
+	pointsFile.open("points.txt");
+	vector<Point> vectorOfPoints;
+	if (pointsFile) {
+		float a;
+		while (pointsFile >> a) {
+			float b;
+			pointsFile >> b;
+			Point p(a, b);
+			vectorOfPoints.push_back(p);
+		}
+	}
+	return vectorOfPoints;
+}
+//sorting points on the basis of Y coordinate
+bool yCoordinateComparator(Point p1, Point p2) {
+	return p1.getB() < p2.getB();
+}
+//sorting points on the basis of X coordinate
+bool xCoordinateComparator(Point p1, Point p2) {
+	return p1.getA() < p2.getA();
+}
+int min(int a, int b) {
+	return a < b ? a : b;
+}
+closestPairs closestPair_distance(vector<Point> points) {
+	int n = points.size();
+	// base case for n=2
+	if (n == 2) {
+		return { points[0],points[1],points[0].getMinDistance(points[1]) };
+	}
+	//base case for n=3
+	if (n == 3) {
+		double dist1 = points[0].getMinDistance(points[1]);
+		double dist2 = points[0].getMinDistance(points[2]);
+		double dist3 = points[1].getMinDistance(points[2]);
+		if (dist1 < dist2 && dist1 < dist3)
+			return { points[0],points[1], dist1 };
+		if (dist2 < dist1 && dist2 < dist3)
+			return { points[0],points[2], dist2 };
+		return{ points[1],points[2], dist3 };
+	}
+	float midIndex = points[n / 2 - 1].getA();
+	vector<Point> XL;
+	vector<Point> XR;
+	for (auto& i : points) {
+		if (i.getA() <= midIndex)
+			XL.push_back(i);
+		else
+			XR.push_back(i);
+	}
+	closestPairs cLeft = closestPair_distance(XL);
+	closestPairs cRight = closestPair_distance(XR);
+	closestPairs cp = cLeft.getDistance() < cRight.getDistance() ? cLeft :
+		cRight;
+	vector<Point> yComplement;
+	for (auto& a : XR) {
+		if (a.getA() <= (midIndex + cp.getDistance()))
+			yComplement.push_back(a);
+	}
+	for (auto& a : XL) {
+		if (a.getA() >= (midIndex - cp.getDistance()))
+			yComplement.push_back(a);
+	}
+	sort(yComplement.begin(), yComplement.end(), yCoordinateComparator);
+	closestPairs minimumDistanceClosestPair = cp;
+	for (int x = 0;x < yComplement.size() - 1;x++) {
+		int maximumComparisons = min(yComplement.size() - x, 8);
+		for (int y = x + 1;y < maximumComparisons;y++) {
+			double localDistance =
+				yComplement[x].getMinDistance(yComplement[y]);
+			if (localDistance < minimumDistanceClosestPair.getDistance())
+				minimumDistanceClosestPair = closestPairs(yComplement[x],
+					yComplement[y], localDistance);
+		}
+	}
+	return minimumDistanceClosestPair;
+}
+int main() {
+	vector<Point> vectorOfPoints = getPointsfromFile();
+	// range should be greater than 1 to get the closest pair
+	if (vectorOfPoints.size() > 1) {
+		sort(vectorOfPoints.begin(), vectorOfPoints.end(),
+			xCoordinateComparator);
+		closestPairs cp = closestPair_distance(vectorOfPoints);
+		cout << "The Closest Pairs (" << cp.getPx().getA() << " " <<
+			cp.getPx().getB() << " ) ("
+			<< cp.getPy().getA() << " " << cp.getPy().getB() << " ) " <<
+			endl;
+		cout << "The distance of closest pairs: " << cp.getDistance() << endl;
+	}
+	else
+		cout << "No any closest pair exists in given input" << endl;
+	return 0;
+}
